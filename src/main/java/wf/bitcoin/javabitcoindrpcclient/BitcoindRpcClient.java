@@ -1325,7 +1325,6 @@ public interface BitcoindRpcClient {
   * to specify all unhardened or hardened child keys.
   * 
   * @see #scanTxOutSet(List)
-  * @param addresses
   * @return
   * @throws GenericRpcException
   */

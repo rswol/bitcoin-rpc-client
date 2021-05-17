@@ -365,6 +365,14 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   }
 
   public Object query(String method, Object... o) throws GenericRpcException {
+    try {
+      return loadResponse(queryForStream(method, o), "1", true);
+    } catch (IOException ex) {
+      throw new BitcoinRPCException(method, Arrays.deepToString(o), ex);
+    }
+  }
+
+  public InputStream queryForStream(String method, Object... o) throws GenericRpcException {
     HttpURLConnection conn = setConnection();
     try {
       byte[] r = prepareRequest(method, o);
@@ -380,7 +388,7 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
                                       conn.getResponseMessage(),
                                       errorStream == null ? null : new String(loadStream(errorStream, true)));
       }
-      return loadResponse(conn.getInputStream(), "1", true);
+      return conn.getInputStream();
     } catch (IOException ex) {
       throw new BitcoinRPCException(method, Arrays.deepToString(o), ex);
     }
