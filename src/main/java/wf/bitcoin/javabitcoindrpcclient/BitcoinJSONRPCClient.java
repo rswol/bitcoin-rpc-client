@@ -35,17 +35,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -2393,7 +2383,8 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
         @Override
         @SuppressWarnings("unchecked")
         public List<String> addresses() {
-          return (List<String>) m.get("addresses");
+          List<String> addresses = ((List<String>) m.get("addresses"));
+          return addresses == null? Collections.singletonList(mapStr("address")): addresses;
         }
 
       }
