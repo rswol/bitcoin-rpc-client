@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -2393,7 +2394,12 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
         @Override
         @SuppressWarnings("unchecked")
         public List<String> addresses() {
-          return (List<String>) m.get("addresses");
+          List<String> addresses = ((List<String>) m.get("addresses"));
+          if (addresses == null) {
+            final String address = mapStr("address");
+            return address == null? Collections.emptyList() : Collections.singletonList(address);
+          }
+          return addresses;
         }
 
       }
