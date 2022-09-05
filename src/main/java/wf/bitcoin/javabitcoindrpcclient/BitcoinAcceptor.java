@@ -23,9 +23,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import wf.bitcoin.javabitcoindrpcclient.BitcoindRpcClient.Transaction;
 
 public class BitcoinAcceptor implements Runnable {
-    
+
     private static final Logger logger = Logger.getLogger(BitcoinAcceptor.class.getCanonicalName());
 
     public final BitcoindRpcClient bitcoin;
@@ -38,12 +39,13 @@ public class BitcoinAcceptor implements Runnable {
         this.lastBlock = lastBlock;
         this.monitorDepth = monitorDepth;
     }
-    
+
     public BitcoinAcceptor(BitcoindRpcClient bitcoin) {
         this(bitcoin, null, 6);
     }
 
-    public BitcoinAcceptor(BitcoindRpcClient bitcoin, String lastBlock, int monitorDepth, BitcoinPaymentListener listener) {
+    public BitcoinAcceptor(BitcoindRpcClient bitcoin, String lastBlock, int monitorDepth,
+            BitcoinPaymentListener listener) {
         this(bitcoin, lastBlock, monitorDepth);
         listeners.add(listener);
     }
@@ -87,14 +89,15 @@ public class BitcoinAcceptor implements Runnable {
 
     private void updateMonitorBlock() throws GenericRpcException {
         monitorBlock = lastBlock;
-        for(int i = 0; i < monitorDepth && monitorBlock != null; i++) {
+        for (int i = 0; i < monitorDepth && monitorBlock != null; i++) {
             BitcoindRpcClient.Block b = bitcoin.getBlock(monitorBlock);
             monitorBlock = b == null ? null : b.previousHash();
         }
     }
 
     public synchronized void checkPayments() throws GenericRpcException {
-        BitcoindRpcClient.TransactionsSinceBlock t = monitorBlock == null ? bitcoin.listSinceBlock() : bitcoin.listSinceBlock(monitorBlock);
+        BitcoindRpcClient.TransactionsSinceBlock t = monitorBlock == null ? bitcoin.listSinceBlock()
+                : bitcoin.listSinceBlock(monitorBlock);
         for (BitcoindRpcClient.Transaction transaction : t.transactions()) {
             if ("receive".equals(transaction.category())) {
                 if (!seen.add(transaction.txId()))
@@ -123,11 +126,11 @@ public class BitcoinAcceptor implements Runnable {
     }
 
     private boolean stop = false;
-    
+
     public void stopAccepting() {
         stop = true;
     }
-    
+
     private long checkInterval = 5000;
 
     /**
@@ -152,11 +155,13 @@ public class BitcoinAcceptor implements Runnable {
     public void run() {
         stop = false;
         long nextCheck = 0;
-        while(!(Thread.interrupted() || stop)) {
+        while (!(Thread.interrupted() || stop)) {
             if (nextCheck <= System.currentTimeMillis())
                 try {
                     nextCheck = System.currentTimeMillis() + checkInterval;
-                    checkPayments();
+                    String block = getLastBlock();
+                    Logger.getLogger(BitcoinAcceptor.class.getName()).log(Level.INFO,
+                        "last block " + lastBlock);
                 } catch (GenericRpcException ex) {
                     Logger.getLogger(BitcoinAcceptor.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -169,23 +174,24 @@ public class BitcoinAcceptor implements Runnable {
         }
     }
 
-//    public static void main(String[] args) {
-//        //System.out.println(System.getProperties().toString().replace(", ", ",\n"));
-//        final BitcoindRpcClient bitcoin = new BitcoinJSONRPCClient(true);
-//        new BitcoinAcceptor(bitcoin, null, 6, new BitcoinPaymentListener() {
-//
-//            public void block(String blockHash) {
-//                try {
-//                    System.out.println("new block: " + blockHash + "; date: " + bitcoin.getBlock(blockHash).time());
-//                } catch (BitcoinRpcException ex) {
-//                    logger.log(Level.SEVERE, null, ex);
-//                }
-//            }
-//
-//            public void transaction(Transaction transaction) {
-//                System.out.println("tx: " + transaction.confirmations() + "\t" + transaction.amount() + "\t=> " + transaction.account());
-//            }
-//        }).run();
-//    }
+    public static void main(String[] args) {
+        // System.out.println(System.getProperties().toString().replace(", ", ",\n"));
+        final BitcoindRpcClient bitcoin = new BitcoinJSONRPCClient(false);
+        new BitcoinAcceptor(bitcoin, null, 6, new BitcoinPaymentListener() {
+
+            public void block(String blockHash) {
+                try {
+                    System.out.println("new block: " + blockHash + "; date: " + bitcoin.getBlock(blockHash).time());
+                } catch (GenericRpcException ex) {
+                    logger.log(Level.SEVERE, null, ex);
+                }
+            }
+
+            public void transaction(Transaction transaction) {
+                System.out.println("tx: " + transaction.confirmations() + "\t" + transaction.amount() + "\t=> "
+                        + transaction.account());
+            }
+        }).run();
+    }
 
 }

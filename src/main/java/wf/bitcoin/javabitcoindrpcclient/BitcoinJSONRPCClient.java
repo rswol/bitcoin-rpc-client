@@ -80,8 +80,8 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   public static final int CONNECT_TIMEOUT = (int) TimeUnit.MINUTES.toMillis(1);
 
   static {
-    String user = "user";
-    String password = "pass";
+    String user = "bitcoin";
+    String password = "bitcoin";
     String host = "localhost";
     String port = null;
 
@@ -2304,6 +2304,11 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
       @SuppressWarnings("unchecked")
       public Map<String, Object> scriptSig() {
         return (Map<String, Object>) m.get("scriptSig");
+      }
+
+      @Override
+      public String coinbase() {
+        return mapStr("coinbase");
       }
 
       @Override

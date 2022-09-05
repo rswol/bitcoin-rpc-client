@@ -1926,6 +1926,7 @@ public interface BitcoindRpcClient {
 
       Map<String, Object> scriptSig();
 
+      String coinbase();
       long sequence();
 
       RawTransaction getTransaction();
